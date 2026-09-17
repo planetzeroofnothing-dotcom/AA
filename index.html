@@ -6,7 +6,7 @@
   <style>
     body { font-family: sans-serif; text-align: center; background: #f4f4f4; padding: 20px; }
     .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 220px; margin: 10px auto; }
-    .card img { width: 100%; border-radius: 5px; }
+    .card img { width: 100%; border-radius: 5px; max-height: 150px; object-fit: cover; }
     .btn-wa { display: inline-block; background: #25D366; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
@@ -14,7 +14,7 @@
 <body>
 
   <h1>المتجر</h1>
-  <div id="products-container"></div>
+  <div id="products-container">جاري تحميل المنتجات...</div>
 
   <script>
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSNRt9TA6ci_DW-2ztwvXsKarUbPMMnGbUYnhaD7OU7cM-GCu62LXfTLCp9mcxEyEpKygNcc_ptSrZ_/pub?output=csv';
@@ -22,21 +22,32 @@
     Papa.parse(sheetUrl, {
       download: true,
       header: true,
+      skipEmptyLines: true,
+      transformHeader: h => h.trim().toLowerCase(),
       complete: function(results) {
         let products = results.data;
         let container = document.getElementById('products-container');
         container.innerHTML = '';
 
+        if (!products || products.length === 0) {
+          container.innerHTML = '<p>لا توجد منتجات حالياً</p>';
+          return;
+        }
+
         products.forEach(p => {
-          if(p.name && p.price) {
-            let waMessage = `السلام عليكم حابب اطلب ${p.name} بسعر ${p.price} جنيه`;
+          let name = p.name || p['اسم المنتج'] || '';
+          let price = p.price || p['السعر'] || '';
+          let image = p.image || p['الصورة'] || 'https://via.placeholder.com/200';
+
+          if (name && price) {
+            let waMessage = `السلام عليكم حابب اطلب ${name} بسعر ${price} جنيه`;
             let waLink = `https://wa.me/201000000000?text=${encodeURIComponent(waMessage)}`;
 
             container.innerHTML += `
               <div class="card">
-                <img src="${p.image}" alt="${p.name}">
-                <h3>${p.name}</h3>
-                <p>السعر: ${p.price} جنيه</p>
+                <img src="${image}" alt="${name}">
+                <h3>${name}</h3>
+                <p>السعر: ${price} جنيه</p>
                 <a class="btn-wa" href="${waLink}" target="_blank">طلب عبر واتساب</a>
               </div>
             `;
